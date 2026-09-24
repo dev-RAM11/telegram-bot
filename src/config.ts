@@ -31,6 +31,7 @@ export interface BotConfig extends StellarConfig {
   startLookbackLedgers: number;
   cursorFile: string;
   maxNotificationsPerCycle: number;
+  digestMode: boolean;
 }
 
 export class ConfigError extends Error {
@@ -165,6 +166,7 @@ export function loadConfig(): BotConfig {
     pollIntervalMs: c.int("POLL_INTERVAL_MS", DEFAULTS.pollIntervalMs, DEFAULTS.minPollIntervalMs),
     startLookbackLedgers: c.int("START_LOOKBACK_LEDGERS", DEFAULTS.startLookbackLedgers, 0),
     cursorFile: path.resolve(process.cwd(), read("CURSOR_FILE") ?? DEFAULTS.cursorFile),
+    digestMode: process.env.DIGEST_MODE === "true",
     maxNotificationsPerCycle: c.int(
       "MAX_NOTIFICATIONS_PER_CYCLE",
       DEFAULTS.maxNotificationsPerCycle,
