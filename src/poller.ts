@@ -68,10 +68,54 @@ export interface PollerDeps {
 /** Telegram tolerates ~20 messages/minute to one chat; stay under it. */
 const SEND_SPACING_MS = 1_500;
 
+/** Maximum number of retry attempts for a single Telegram send. */
+const MAX_SEND_RETRIES = 3;
+
+/** Initial backoff in milliseconds for Telegram send retries. */
+const INITIAL_BACKOFF_MS = 1_000;
+
+/** Maximum backoff in milliseconds for Telegram send retries. */
+const MAX_BACKOFF_MS = 10_000;
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/**
+ * Sends a message with bounded exponential backoff.
+ *
+ * If the Telegram API is temporarily unavailable (rate limit, network error,
+ * or bad token), we retry a few times with increasing delays. This prevents
+ * transient failures from dropping notifications while avoiding infinite
+ * retries that would block the poller loop.
+ */
+async function sendWithRetry(
+  send: (text: string) => Promise<void>,
+  text: string,
+): Promise<void> {
+  let attempt = 0;
+  let backoff = INITIAL_BACKOFF_MS;
+
+  while (true) {
+    try {
+      await send(text);
+      return;
+    } catch (err) {
+      attempt++;
+      if (attempt >= MAX_SEND_RETRIES) {
+        throw err; // Exhausted retries
+      }
+      console.warn(
+        `[poller] send attempt ${attempt} failed, retrying in ${backoff}ms: ` +
+          errMessage(err),
+      );
+      await sleep(backoff);
+      // Exponential backoff with cap
+      backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
+    }
+  }
 }
 
 export function createPoller(deps: PollerDeps) {
