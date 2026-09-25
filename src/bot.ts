@@ -204,6 +204,8 @@ export interface BotDeps {
    * getMe() call so `bot.handleUpdate()` works without a real Telegram token.
    */
   botInfo?: UserFromGetMe;
+  pause: () => PollerPauseResult;
+  resume: () => PollerResumeResult;
 }
 
 /**
@@ -220,7 +222,6 @@ function isChatAllowed(allowedChatIds: string[], chatId: number): boolean {
   const asString = String(chatId);
   return allowedChatIds.some((allowed) => allowed === asString);
 }
-
 
 function isOperator(ctx: Context, config: BotConfig): boolean {
   const operatorId = config.operatorTelegramUserId;

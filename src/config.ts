@@ -248,8 +248,10 @@ function collector(profile: Record<string, string>) {
           );
         }
       }
+
       return entries;
     },
+
     optionalUserId(name: string): string | null {
       const value = read(name);
       if (value === undefined) return null;
