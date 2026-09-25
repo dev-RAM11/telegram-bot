@@ -204,8 +204,6 @@ export interface BotDeps {
    * getMe() call so `bot.handleUpdate()` works without a real Telegram token.
    */
   botInfo?: UserFromGetMe;
-  pause: () => PollerPauseResult;
-  resume: () => PollerResumeResult;
 }
 
 /**
